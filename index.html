@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tsukaya Live</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+html{color-scheme:light}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: vidéo de rue japonaise en pixel art fixée en fond, puis panneaux opaques à bord dur (en-tête, hero + statut, planning, platines, clips, Discord). */
+:root {
+  --bg: #f6d9e0;
+  --panel: rgba(255, 244, 247, .92);
+  --panel-2: rgba(250, 226, 233, .96);
+  --line: #5a1a2e;
+  --shadow: #5a1a2e;
+  --fg: #2b0e1a;
+  --muted: #7a4a5a;
+  --accent: #c8213f;
+  --accent-ink: #ffffff;
+  --live: #e0243c;
+  --gold: #a87000;
+  --veil: rgba(255, 230, 238, .12);
+  --font-display: "DotGothic16", "MS Gothic", monospace;
+  --font-body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a0a16; --panel: rgba(30, 12, 26, .9); --panel-2: rgba(52, 22, 44, .96);
+    --line: #f08aa6; --shadow: #000000; --fg: #fbe9ef; --muted: #d0a2b2;
+    --accent: #ff6b8b; --accent-ink: #2a0a14; --live: #ff5a6e; --gold: #f2c14e;
+    --veil: rgba(18, 6, 16, .5); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a0a16; --panel: rgba(30, 12, 26, .9); --panel-2: rgba(52, 22, 44, .96);
+  --line: #f08aa6; --shadow: #000000; --fg: #fbe9ef; --muted: #d0a2b2;
+  --accent: #ff6b8b; --accent-ink: #2a0a14; --live: #ff5a6e; --gold: #f2c14e;
+  --veil: rgba(18, 6, 16, .5); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.65;
+  padding-block: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bgvideo { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; image-rendering: pixelated; }
+.veil { position: fixed; inset: 0; z-index: -1; background: var(--veil); pointer-events: none; }
+.wrap { max-width: 1080px; margin-inline: auto; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; line-height: 1.15; text-wrap: balance; margin: 0; }
+.label { font-family: var(--font-display); font-size: 14px; letter-spacing: .08em; color: var(--muted); }
+
+.box { background: var(--panel); border: 2px solid var(--line); box-shadow: 5px 5px 0 var(--shadow); }
+
+header.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9;
+  background: var(--panel); border-bottom: 2px solid var(--line);
+  backdrop-filter: blur(6px);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; padding-block: 10px; flex-wrap: wrap; }
+.brand { font-family: var(--font-display); font-size: 24px; text-decoration: none; letter-spacing: .04em; }
+.brand b { color: var(--accent); font-weight: 400; }
+nav { display: flex; gap: 2px 18px; flex-wrap: wrap; }
+nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px; padding: 4px 0; border-bottom: 2px solid transparent; }
+nav a:hover { color: var(--fg); border-bottom-color: var(--accent); }
+
+main { padding-block: 32px 40px; display: grid; gap: 28px; }
+.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; align-items: stretch; }
+.hero > * { min-width: 0; }
+.intro { padding: 32px; display: flex; flex-direction: column; justify-content: center; }
+.intro h1 { font-size: clamp(36px, 6.5vw, 64px); margin-top: 10px; }
+.intro h1 span { color: var(--accent); }
+.intro p { color: var(--muted); max-width: 52ch; margin: 16px 0 24px; font-size: 17px; }
+.btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { display: inline-block; text-decoration: none; font-weight: 700; padding: 11px 18px; background: var(--panel-2); border: 2px solid var(--line); box-shadow: 3px 3px 0 var(--shadow); text-align: center; }
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow); }
+.btn.main { background: var(--accent); color: var(--accent-ink); }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+.tag { font-family: var(--font-display); font-size: 14px; padding: 2px 10px; border: 2px solid var(--line); background: var(--panel-2); }
+
+.status { padding: 20px; display: grid; gap: 14px; align-content: start; }
+.status .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.screen { aspect-ratio: 16 / 9; max-width: 100%; border: 2px solid var(--line); position: relative; overflow: hidden;
+  background: var(--panel-2) url("poster.jpg") center / cover; image-rendering: pixelated; display: grid; place-items: end start; padding: 12px; }
+.screen .cap { background: var(--panel); border: 2px solid var(--line); padding: 8px 12px; max-width: 100%; image-rendering: auto; }
+.screen strong { display: block; font-family: var(--font-display); font-weight: 400; font-size: clamp(18px, 2.6vw, 24px); overflow-wrap: anywhere; }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 14px; letter-spacing: .08em; padding: 3px 10px; border: 2px solid var(--line); background: var(--panel-2); }
+.pill i { width: 10px; height: 10px; background: var(--muted); display: block; }
+.pill.on { color: var(--live); border-color: var(--live); }
+.pill.on i { background: var(--live); animation: blink 1.4s steps(2, jump-none) infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+section.box { padding: 28px; }
+.head { display: flex; justify-content: space-between; align-items: end; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 2px dashed var(--line); }
+.head h2 { font-size: clamp(26px, 4vw, 36px); }
+.head p { margin: 6px 0 0; color: var(--muted); }
+.jp { color: var(--accent); }
+
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.day { background: var(--panel-2); border: 2px solid var(--line); padding: 12px; display: grid; gap: 4px; align-content: start; min-height: 126px; }
+.day .d { font-family: var(--font-display); font-size: 14px; color: var(--muted); }
+.day .t { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--accent); }
+.day .g { font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.day.off { background: transparent; border-style: dashed; }
+.day.off .g { color: var(--muted); font-weight: 400; }
+.day.today { background: var(--accent); border-color: var(--line); box-shadow: 3px 3px 0 var(--shadow); }
+.day.today .d, .day.today .t, .day.today .g { color: var(--accent-ink); }
+.day.today .d::after { content: " · ce jour"; }
+
+.trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+.trophy { background: var(--panel-2); border: 2px solid var(--line); padding: 16px; display: grid; gap: 12px; }
+.trophy .top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.trophy h3 { font-size: 20px; overflow-wrap: anywhere; }
+.badge { font-family: var(--font-display); font-size: 13px; padding: 1px 8px; white-space: nowrap; border: 2px solid var(--line); color: var(--muted); }
+.badge.plat { color: var(--gold); border-color: var(--gold); }
+.bar-track { height: 12px; border: 2px solid var(--line); background: var(--panel); }
+.bar-fill { height: 100%; background: var(--accent); }
+.trophy.done .bar-fill { background: var(--gold); }
+.trophy .meta { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+.clip { text-decoration: none; background: var(--panel-2); border: 2px solid var(--line); display: grid; }
+.clip:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow); }
+.clip .thumb { aspect-ratio: 16 / 9; display: grid; place-items: center; font-family: var(--font-display); font-size: 15px; color: var(--muted); border-bottom: 2px solid var(--line);
+  background: repeating-conic-gradient(var(--panel) 0 25%, var(--panel-2) 0 50%) 0 0 / 16px 16px; }
+.clip .body { padding: 10px 14px 14px; display: grid; gap: 2px; }
+.clip b { overflow-wrap: anywhere; }
+.clip span { color: var(--muted); font-size: 14px; }
+
+.discord { display: grid; grid-template-columns: 1fr auto; gap: 22px; align-items: center; }
+.discord > * { min-width: 0; }
+.discord h3 { font-size: clamp(22px, 3.6vw, 30px); margin-top: 6px; }
+.discord p { color: var(--muted); margin: 8px 0 0; max-width: 56ch; }
+
+.empty { margin: 0; padding: 22px; border: 2px dashed var(--line); background: var(--panel-2); color: var(--muted); }
+footer { margin-inline: auto; max-width: 1080px; margin-bottom: 28px; padding: 14px 20px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; }
+  .intro { padding: 22px; }
+  .week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .discord { grid-template-columns: 1fr; }
+  section.box { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .pill.on i { animation: none; } html { scroll-behavior: auto; } .btn, .clip { transition: none; } }
+
+[hidden] { display: none !important; }
+nav a.on { color: var(--fg); border-bottom-color: var(--accent); }
+.gears { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 14px; }
+.gear { background: var(--panel-2); border: 2px solid var(--line); padding: 16px; display: grid; gap: 8px; align-content: start; }
+.gear .cat { font-family: var(--font-display); font-size: 14px; color: var(--muted); }
+.gear h3 { font-size: 20px; overflow-wrap: anywhere; }
+.gear .badge { justify-self: start; }
+.groups { display: grid; gap: 28px; }
+.group { display: grid; gap: 12px; }
+.group-title { font-size: 22px; }
+.gear h4 { font-family: var(--font-display); font-weight: 400; font-size: 20px; margin: 0; overflow-wrap: anywhere; }
+.gear .txt { display: grid; gap: 6px; align-content: center; min-width: 0; }
+.gear.has-pic { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: center; }
+.gear .pic { width: 72px; height: 72px; border: 2px solid var(--line); background: var(--panel); display: grid; place-items: center; overflow: hidden; }
+.gear .pic img { width: 100%; height: 100%; object-fit: contain; }
+.gear .pic svg { width: 56px; height: 56px; }
+a.gear { text-decoration: none; color: inherit; }
+a.gear:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow); }
+.gear .pic.photo { background: #ffffff; }
+.gear .cat.link { color: var(--accent); }
+.gears { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 18px; }
+.gear { padding: 20px; gap: 12px; }
+.gear.has-pic { grid-template-columns: 104px minmax(0, 1fr); gap: 20px; }
+.gear .pic { width: 104px; height: 104px; }
+.gear .pic svg { width: 76px; height: 76px; }
+.gear .txt { gap: 8px; }
+.gear h4 { line-height: 1.3; }
+.groups { gap: 36px; }
+@media (max-width: 480px) { .gear.has-pic { grid-template-columns: 84px minmax(0, 1fr); gap: 14px; } .gear .pic { width: 84px; height: 84px; } }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.stat { background: var(--panel-2); border: 2px solid var(--line); padding: 16px 18px; display: grid; gap: 2px; }
+.stat b { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5vw, 44px); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-family: var(--font-display); font-size: 14px; color: var(--muted); letter-spacing: .06em; }
+.stat.plat b { color: var(--gold); }
+.profile { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; background: var(--panel-2); border: 2px solid var(--line); padding: 18px 20px; margin-bottom: 22px; }
+.profile .avatar { width: 64px; height: 64px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); border: 2px solid var(--line); font-family: var(--font-display); font-size: 20px; flex: none; }
+.profile .who { display: grid; gap: 2px; min-width: 0; flex: 1 1 200px; }
+.profile .who strong { font-family: var(--font-display); font-weight: 400; font-size: 24px; overflow-wrap: anywhere; }
+footer.foot { display: grid; gap: 18px; padding: 26px 28px; justify-content: stretch; }
+.foot-main { display: flex; justify-content: space-between; align-items: start; gap: 24px; flex-wrap: wrap; }
+.foot-brand { font-family: var(--font-display); font-size: 26px; color: var(--fg); }
+.foot-nav { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 28px; }
+.foot-nav a { text-decoration: none; color: var(--muted); font-weight: 500; }
+.foot-nav a:hover { color: var(--fg); text-decoration: underline; }
+.foot-copy { border-top: 2px dashed var(--line); padding-top: 14px; color: var(--muted); font-size: 14px; }
+@media (max-width: 480px) { .stat { padding: 12px; } .foot-nav { grid-template-columns: repeat(2, auto); } }
+.discord p { max-width: 64ch; }
+.discord p + p { margin-top: 12px; }
+.discord .btn { align-self: start; }
+.live-chip { text-decoration: none; color: var(--muted); white-space: nowrap; }
+.live-chip:hover { border-color: var(--accent); }
+.live-chip.on { color: var(--live); }
+@media (max-width: 640px) { .bar .wrap { justify-content: flex-start; } .live-chip { margin-left: auto; } }
+.live-chip .tw { flex: none; display: block; }
+</style>
+</head>
+<body>
+
+<video class="bgvideo" id="bgv" src="bg.mp4" poster="poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+<div class="veil"></div>
+
+<header class="bar"><div class="wrap">
+  <a class="brand" href="#accueil" id="brand"></a>
+  <nav aria-label="Navigation principale">
+    <a href="#accueil" data-nav="accueil">Accueil</a><a href="#planning" data-nav="planning">Planning</a><a href="#trophees" data-nav="trophees">Profil PSN</a><a href="#clips" data-nav="clips">Clips</a><a href="#discord" data-nav="discord">Discord</a><a href="#setup" data-nav="setup">Setup</a>
+  </nav>
+  <a class="pill live-chip" id="live-chip" href="#" target="_blank" rel="noopener"><svg class="tw" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="#9146FF" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.43l-3 3v-3H6.857V1.714h13.714Z"/></svg><i></i><span id="chip-text">HORS LIGNE</span></a>
+</div></header>
+
+<main class="wrap" id="top">
+  <div class="hero" id="direct" data-view="accueil">
+    <div class="box intro">
+      <span class="label"><span class="jp">配信</span> · Chaîne Twitch · PlayStation</span>
+      <h1 id="hero-title"></h1>
+      <p id="hero-text"></p>
+      <div class="btns">
+        <a class="btn main" id="btn-twitch" href="#" target="_blank" rel="noopener">Voir le direct</a>
+        <a class="btn" href="#discord">Rejoindre le Discord</a>
+      </div>
+      <div class="tags" id="tags"></div>
+    </div>
+    <div class="box status">
+      <div class="row">
+        <span class="pill" id="pill"><i></i><span id="pill-text"></span></span>
+        <span class="label" id="status-sub"></span>
+      </div>
+      <div class="screen"><div class="cap"><strong id="screen-title"></strong><span class="label" id="screen-sub"></span></div></div>
+      <a class="btn" id="btn-twitch2" href="#" target="_blank" rel="noopener">Ouvrir sur Twitch</a>
+    </div>
+  </div>
+
+  <section class="box" id="sec-planning" data-view="planning">
+    <div class="head"><div><h2><span class="jp">予定</span> Planning de la semaine</h2><p>Semaine du 19/10 au 25/10. Les horaires sont ceux de Paris.</p></div></div>
+    <div class="week" id="week"></div>
+  </section>
+
+  <section class="box" id="sec-trophees" data-view="trophees">
+    <div class="head"><div><h2><span class="jp">トロフィー</span> Profil PSN</h2><p>Mes jeux et la progression de mes trophées.</p></div><span class="label" id="plat-count"></span></div>
+    <div class="stats" aria-label="Statistiques PlayStation">
+      <div class="stat"><b id="st-games">0</b><span>Jeux</span></div>
+      <div class="stat"><b id="st-troph">0</b><span>Trophées</span></div>
+      <div class="stat plat"><b id="st-plat">0</b><span>Platines</span></div>
+    </div>
+    <div class="profile">
+      <div class="avatar" aria-hidden="true">PSN</div>
+      <div class="who"><span class="label">Compte PlayStation Network</span><strong id="psn-id"></strong></div>
+      <a class="btn" id="psn-link" href="#" target="_blank" rel="noopener">Voir sur PSNProfiles →</a>
+    </div>
+    <div class="trophies" id="trophies"></div>
+  </section>
+
+  <section class="box" id="sec-clips" data-view="clips">
+    <div class="head"><div><h2><span class="jp">クリップ</span> Meilleurs clips</h2><p>Les moments du direct à revoir.</p></div><a class="label" id="all-clips" href="#" target="_blank" rel="noopener">Tous les clips →</a></div>
+    <div class="clips" id="clipsGrid"></div>
+  </section>
+
+  <section class="box" id="sec-discord" data-view="discord">
+    <div class="discord">
+      <div>
+        <span class="label"><span class="jp">仲間</span> · Communauté</span>
+        <h3>Rejoins la communauté sur Discord</h3>
+        <p>Envie de ne rien rater de mes lives et de rester au courant de toute l’actualité ? Rejoins mon serveur Discord !</p>
+        <p>Tu y retrouveras mon planning pour savoir quand je serai en live, ainsi que des notifications pour être prévenu dès que je lance un stream. Tu pourras également discuter avec moi et les autres viewers, partager tes idées et suivre les nouveautés de la communauté.</p>
+        <p>Le Discord est le meilleur moyen de rester connecté, de ne manquer aucun live et de faire partie de l’aventure, même en dehors des streams.</p>
+        <p>Alors n’hésite pas à nous rejoindre et à participer à la vie de la communauté !</p>
+      </div>
+      <a class="btn main" id="btn-discord" href="#" target="_blank" rel="noopener">Rejoindre le serveur</a>
+    </div>
+  </section>
+
+  <section class="box" id="sec-setup" data-view="setup">
+    <div class="head"><div><h2><span class="jp">機材</span> Setup</h2><p>Le matériel que j'utilise pour streamer.</p></div></div>
+    <div class="groups" id="setupGrid"></div>
+  </section>
+</main>
+
+<footer class="box foot">
+  <div class="foot-main">
+    <div><div class="foot-brand" id="foot-name"></div><span class="label">Chaîne Twitch · PlayStation</span></div>
+    <nav class="foot-nav" aria-label="Pied de page">
+      <a href="#accueil">Accueil</a><a href="#planning">Planning</a><a href="#trophees">Profil PSN</a><a href="#clips">Clips</a><a href="#discord">Discord</a><a href="#setup">Setup</a>
+    </nav>
+  </div>
+  <div class="foot-copy">© <span id="year"></span> <span id="foot-name2"></span></div>
+</footer>
+
+<script>
+/* Modifie uniquement cet objet pour mettre tes informations. */
+const SITE = {
+  pseudo: "Tsukaya",
+  psn: "TsuKaYa09",
+  baseline: "Streameur gaming : je joue et je partage les bons moments avec vous.",
+  texte: "Je joue sur PlayStation.",
+  tags: ["PlayStation"],
+  setup: [{"titre": "Console", "items": [{"nom": "PlayStation 5 (Slim)", "type": "Console", "note": "", "image": "img/ps5-slim.jpg", "lien": "https://www.amazon.fr/dp/B0FP2S1MNB"}]}, {"titre": "Audio", "items": [{"nom": "Fifine AM8", "type": "Microphone", "note": "Prévu", "image": "img/fifine-am8.jpg", "lien": "https://www.amazon.fr/dp/B0C4KVBBZM"}, {"nom": "Elgato Low Profile", "type": "Bras de micro", "note": "Prévu", "image": "img/elgato-arm.jpg", "lien": "https://www.amazon.fr/dp/B097376LKF"}, {"nom": "beyerdynamic DT 770 PRO (80 ohm)", "type": "Casque", "note": "Prévu", "image": "img/dt770-pro.jpg", "lien": "https://www.amazon.fr/dp/B0016MNAAI"}]}, {"titre": "Stream", "items": [{"nom": "MSI MAG 27\" WQHD (180 Hz, incurvé)", "type": "Écran", "note": "", "image": "img/msi-ecran.jpg", "lien": "https://www.amazon.fr/dp/B0DMSR1X9T"}, {"nom": "ASUS ROG Strix XG27AQDMGR (27\", 1440p, 240 Hz, OLED)", "type": "Écran", "note": "Prévu", "image": "img/asus-rog.jpg", "lien": "https://www.amazon.fr/dp/B09CD32DNH"}, {"nom": "Stream Deck+", "type": "Contrôleur", "note": "Prévu", "image": "img/stream-deck-plus.jpg", "lien": "https://www.amazon.fr/dp/B0BJL8SJ59"}]}, {"titre": "Logiciel", "items": [{"nom": "OBS Studio", "type": "Diffusion", "note": "", "lien": "https://obsproject.com"}, {"nom": "Twitch", "type": "Alertes et overlays", "note": ""}]}],
+  live: false,
+  jeuEnCours: "",
+  liens: {
+    twitch: "https://www.twitch.tv/tsukaya_0",
+    clips: "https://www.twitch.tv/tsukaya_0/clips",
+    discord: "https://discord.gg/EExqP34tMn",
+    psnprofiles: "https://psnprofiles.com/TsuKaYa09"
+  },
+  /* Vide pour l'instant. Format : { jour: "Mardi", heure: "20h30", jeu: "Nom du jeu" } */
+  planning: [
+    { jour: "Lundi", heure: "", jeu: "Repos" },
+    { jour: "Mardi", heure: "", jeu: "Repos" },
+    { jour: "Mercredi", heure: "", jeu: "Repos" },
+    { jour: "Jeudi", heure: "", jeu: "Repos" },
+    { jour: "Vendredi", heure: "", jeu: "Repos" },
+    { jour: "Samedi", heure: "", jeu: "Repos" },
+    { jour: "Dimanche", heure: "", jeu: "Repos" }
+  ],
+  /* Vide pour l'instant. Format : { jeu: "Nom du jeu", fait: 10, total: 42, statut: "En cours" } */
+  platines: [],
+  /* Vide pour l'instant. Format : { titre: "Titre du clip", info: "Jeu" } */
+  clips: []
+};
+
+const $ = (id) => document.getElementById(id);
+const tx = (e, s) => { e.textContent = s; };
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
+const setStats = (games, troph, plat) => {
+  tx($("st-games"), games);
+  tx($("st-troph"), troph);
+  tx($("st-plat"), plat);
+};
+const setChip = (live) => {
+  const c = $("live-chip");
+  c.classList.toggle("on", Boolean(live));
+  tx($("chip-text"), live ? "EN DIRECT" : "HORS LIGNE");
+  c.title = live ? "Je suis en direct, viens sur Twitch" : "Pas de direct en ce moment";
+};
+
+const bn = SITE.pseudo;
+$("brand").append(document.createTextNode(bn.slice(0, -1)), el("b", "", bn.slice(-1)));
+$("hero-title").append(document.createTextNode("Salut, moi c'est "), el("span", "", SITE.pseudo));
+tx($("hero-text"), SITE.baseline + " " + SITE.texte);
+tx($("foot-name"), SITE.pseudo);
+tx($("foot-name2"), SITE.pseudo);
+tx($("year"), new Date().getFullYear());
+SITE.tags.forEach(t => $("tags").append(el("span", "tag", t)));
+
+["btn-twitch", "btn-twitch2", "live-chip"].forEach(id => $(id).href = SITE.liens.twitch);
+$("btn-discord").href = SITE.liens.discord;
+$("all-clips").href = SITE.liens.clips;
+$("psn-link").href = SITE.liens.psnprofiles;
+tx($("psn-id"), SITE.psn);
+
+$("pill").classList.toggle("on", SITE.live);
+setChip(SITE.live);
+tx($("pill-text"), SITE.live ? "EN DIRECT" : "HORS LIGNE");
+tx($("status-sub"), SITE.live ? "Le live a commencé" : "Pas de direct en ce moment");
+tx($("screen-title"), SITE.live ? (SITE.jeuEnCours || "En direct") : "Le direct revient bientôt");
+tx($("screen-sub"), SITE.live ? "Sur Twitch maintenant" : "Suis la chaîne pour être prévenu");
+
+const empty = (id, msg) => { const e = el("p", "empty", msg); $(id).replaceWith(e); };
+
+const todayIdx = (new Date().getDay() + 6) % 7;
+if (!SITE.planning.length) empty("week", "Le planning n'est pas encore publié.");
+SITE.planning.forEach((p, i) => {
+  const d = el("div", "day" + (p.heure ? "" : " off") + (i === todayIdx ? " today" : ""));
+  d.append(el("div", "d", p.jour));
+  if (p.heure) d.append(el("div", "t", p.heure));
+  d.append(el("div", "g", p.jeu));
+  $("week").append(d);
+});
+
+const done = SITE.platines.filter(p => p.fait >= p.total).length;
+setStats(SITE.platines.length, SITE.platines.reduce((a, p) => a + p.fait, 0), SITE.platines.filter(p => p.fait >= p.total).length);
+tx($("plat-count"), SITE.platines.length ? done + " platine" + (done > 1 ? "s" : "") + " sur " + SITE.platines.length + " jeux" : "Aucun trophée pour l'instant");
+if (!SITE.platines.length) empty("trophies", "Le compteur démarre à zéro. Les premiers trophées et platines apparaîtront ici.");
+SITE.platines.forEach(p => {
+  const ok = p.fait >= p.total;
+  const c = el("div", "trophy" + (ok ? " done" : ""));
+  const top = el("div", "top");
+  top.append(el("h3", "", p.jeu), el("span", "badge" + (ok ? " plat" : ""), p.statut));
+  const track = el("div", "bar-track");
+  const fill = el("div", "bar-fill");
+  fill.style.width = Math.min(100, Math.round(p.fait / p.total * 100)) + "%";
+  track.append(fill);
+  const meta = el("div", "meta");
+  meta.append(el("span", "", p.fait + " / " + p.total + " trophées"), el("span", "", Math.round(p.fait / p.total * 100) + " %"));
+  c.append(top, track, meta);
+  $("trophies").append(c);
+});
+
+if (!SITE.clips.length) empty("clipsGrid", "Pas encore de clip. Les meilleurs moments du direct seront ajoutés ici.");
+SITE.clips.forEach(cl => {
+  const a = el("a", "clip");
+  a.href = SITE.liens.clips; a.target = "_blank"; a.rel = "noopener";
+  a.append(el("div", "thumb", "▶ Aperçu du clip"));
+  const b = el("div", "body");
+  b.append(el("b", "", cl.titre), el("span", "", cl.info));
+  a.append(b);
+  $("clipsGrid").append(a);
+});
+
+
+/* ---------- setup ---------- */
+const ICONS = {
+  micro: '<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><rect x="22" y="6" width="20" height="30" fill="var(--accent)" fill-opacity=".25" stroke="var(--line)" stroke-width="3"/><path d="M22 15h20M22 22h20M22 29h20" stroke="var(--line)" stroke-width="2"/><path d="M13 30v6a19 19 0 0 0 38 0v-6" fill="none" stroke="var(--line)" stroke-width="3"/><path d="M32 55v5M22 60h20" stroke="var(--line)" stroke-width="3"/></svg>',
+  bras: '<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><rect x="4" y="44" width="16" height="12" fill="var(--panel)" stroke="var(--line)" stroke-width="3"/><path d="M12 44V28L38 14" fill="none" stroke="var(--line)" stroke-width="4" stroke-linecap="square"/><circle cx="12" cy="28" r="3.5" fill="var(--accent)" stroke="var(--line)" stroke-width="2"/><circle cx="38" cy="14" r="3.5" fill="var(--accent)" stroke="var(--line)" stroke-width="2"/><rect x="42" y="14" width="16" height="12" fill="var(--panel)" stroke="var(--line)" stroke-width="3"/></svg>'
+};
+function renderSetup(groups) {
+  const box = $("setupGrid");
+  box.replaceChildren(...(groups || []).map((g) => {
+    const sec = el("div", "group");
+    sec.append(el("h3", "group-title", g.titre));
+    if (g.items && g.items.length) {
+      const grid = el("div", "gears");
+      g.items.forEach((i) => {
+        const hasPic = Boolean(i.image || ICONS[i.icone]);
+        const c = el(i.lien ? "a" : "div", "gear" + (hasPic ? " has-pic" : ""));
+        if (i.lien) { c.href = i.lien; c.target = "_blank"; c.rel = "noopener"; }
+        if (hasPic) {
+          const pic = el("div", "pic");
+          if (i.image) { const im = el("img"); im.src = i.image; im.alt = i.nom; im.loading = "lazy"; pic.classList.add("photo"); pic.append(im); }
+          else pic.innerHTML = ICONS[i.icone];
+          c.append(pic);
+        }
+        const txt = el("div", "txt");
+        if (i.type) txt.append(el("div", "cat", i.type));
+        txt.append(el("h4", "", i.nom));
+        if (i.note) txt.append(el("span", "badge", i.note));
+        if (i.lien) txt.append(el("span", "cat link", "Voir le produit →"));
+        c.append(txt);
+        grid.append(c);
+      });
+      sec.append(grid);
+    } else sec.append(el("p", "empty", "Bientôt."));
+    return sec;
+  }));
+}
+
+/* ---------- catégories (accueil, planning, trophées, clips, discord, setup) ---------- */
+const VIEWS = ["accueil", "planning", "trophees", "clips", "discord", "setup"];
+function route(scroll) {
+  let v = (location.hash || "").replace("#", "");
+  if (!VIEWS.includes(v)) v = "accueil";
+  document.querySelectorAll("[data-view]").forEach((n) => {
+    n.hidden = !(v === "accueil" || n.dataset.view === v);
+  });
+  document.querySelectorAll("nav a[data-nav]").forEach((a) => {
+    const on = a.dataset.nav === v;
+    a.classList.toggle("on", on);
+    if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+  if (scroll) window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", () => route(true));
+route(false);
+
+renderSetup(SITE.setup);
+
+/* Fond vidéo : arrêté si l'appareil demande moins d'animations. */
+try {
+  const v = $("bgv");
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { v.removeAttribute("autoplay"); v.pause(); }
+  else { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+} catch (e) {}
+</script>
+
+</body>
+</html>
